@@ -1,0 +1,41 @@
+[project]
+name = "dream-league-bonus-tracker"
+version = "0.1.0"
+description = "Track bonus usage in Sport5 Dream League fantasy football"
+authors = [
+    {name = "baraklevycode"}
+]
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi (>=0.128.7,<0.129.0)",
+    "uvicorn (>=0.40.0,<0.41.0)",
+    "httpx (>=0.28.1,<0.29.0)",
+    "pydantic-settings (>=2.12.0,<3.0.0)",
+    "click (>=8.3.1,<9.0.0)"
+]
+
+
+[project.scripts]
+tracker = "dream_league_bonus_tracker.cli:cli"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "pytest (>=9.0.2,<10.0.0)",
+    "pytest-cov (>=7.0.0,<8.0.0)",
+    "pytest-asyncio (>=1.3.0,<2.0.0)",
+    "ruff (>=0.15.0,<0.16.0)"
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
