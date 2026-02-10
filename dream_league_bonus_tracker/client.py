@@ -115,14 +115,14 @@ class DreamTeamClient:
 
     async def get_league_data(
         self,
-        league_id: int,
+        league_id: int | None = None,
         page_index: int = 0,
         search_text: str = "",
     ) -> GetLeagueDataResponse:
         """Fetch league data including all teams.
 
         Args:
-            league_id: The custom league ID.
+            league_id: The custom league ID. Pass None for the main global league table.
             page_index: Page index for pagination (default 0).
             search_text: Optional search text to filter teams.
 
@@ -134,7 +134,7 @@ class DreamTeamClient:
         """
         params: dict[str, Any] = {
             "seasonId": self._season_id,
-            "leagueId": league_id,
+            "leagueId": league_id if league_id is not None else "null",
             "teamId": "null",
             "isPerRound": "false",
             "pageIndex": page_index,

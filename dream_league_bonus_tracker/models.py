@@ -109,8 +109,8 @@ class CustomLeague(BaseModel):
 class LeagueResponseData(BaseModel):
     """Data payload from GetLeagueData response."""
 
-    league_name: str = Field(alias="leagueName")
-    custom_league: CustomLeague = Field(alias="customLeague")
+    league_name: Optional[str] = Field(default=None, alias="leagueName")
+    custom_league: Optional[CustomLeague] = Field(default=None, alias="customLeague")
     teams: list[TeamInLeague]
 
     model_config = {"populate_by_name": True}
@@ -151,7 +151,7 @@ class TeamBonusStatus(BaseModel):
 class LeagueBonusReport(BaseModel):
     """Bonus usage report for an entire league."""
 
-    league_id: int
+    league_id: Optional[int] = None
     league_name: str
     season_id: int
     teams: list[TeamBonusStatus]

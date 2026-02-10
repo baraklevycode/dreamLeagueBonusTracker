@@ -189,12 +189,24 @@ async def get_team_bonuses(user_id: int) -> TeamBonusStatus:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
+@app.get("/league/main/bonuses", response_model=LeagueBonusReport)
+async def get_main_league_bonuses(
+    season_id: int = Query(default=6, description="Season ID"),
+) -> LeagueBonusReport:
+    """Get bonus usage status for all teams in the main global league table."""
+    service = _get_service()
+    try:
+        return await service.get_league_bonuses(league_id=None, season_id=season_id)
+    except BonusServiceError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
 @app.get("/league/{league_id}/bonuses", response_model=LeagueBonusReport)
 async def get_league_bonuses(
     league_id: int,
     season_id: int = Query(default=6, description="Season ID"),
 ) -> LeagueBonusReport:
-    """Get bonus usage status for all teams in a league.
+    """Get bonus usage status for all teams in a custom league.
 
     Args:
         league_id: The custom league ID.

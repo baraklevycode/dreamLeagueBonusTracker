@@ -67,17 +67,17 @@ async def _team_bonuses_async(
 
 
 @cli.command("league-bonuses")
-@click.option("--league-id", required=True, type=int, help="Custom league ID.")
+@click.option("--league-id", default=None, type=int, help="Custom league ID. Omit for main league table.")
 @click.option("--email", default=None, help="Sport5 account email (overrides .env).")
 @click.option("--password", default=None, help="Sport5 account password (overrides .env).")
 @click.option("--season-id", default=6, type=int, help="Season ID (default: 6).")
-def league_bonuses(league_id: int, email: str | None, password: str | None, season_id: int) -> None:
-    """Get bonus usage status for all teams in a league."""
+def league_bonuses(league_id: int | None, email: str | None, password: str | None, season_id: int) -> None:
+    """Get bonus usage status for all teams in a league. Omit --league-id for main league."""
     _run_async(_league_bonuses_async(league_id, email, password, season_id))
 
 
 async def _league_bonuses_async(
-    league_id: int,
+    league_id: int | None,
     email: str | None,
     password: str | None,
     season_id: int,

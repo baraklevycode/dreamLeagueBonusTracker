@@ -130,14 +130,15 @@ async function handleTeamSearch(e) {
     try {
         const response = await fetch(`${API_BASE}/team/${userId}/bonuses`);
         if (!response.ok) {
-            const data = await response.json().catch(() => ({}));
-            throw new Error(data.detail || `HTTP ${response.status}`);
+            const errData = await response.json().catch(() => null);
+            const detail = errData && typeof errData === "object" ? (errData.detail || JSON.stringify(errData)) : `HTTP ${response.status}`;
+            throw new Error(detail);
         }
         const data = await response.json();
         renderTeamResult(data);
         resultsEl.style.display = "block";
     } catch (err) {
-        errorEl.textContent = `Error: ${err.message}`;
+        errorEl.textContent = `Error: ${err.message || String(err)}`;
         errorEl.classList.add("visible");
     } finally {
         loaderEl.classList.remove("visible");
@@ -153,7 +154,7 @@ function renderTeamResult(team) {
 async function handleLeagueSearch(e) {
     e.preventDefault();
     const leagueId = document.getElementById("league-id-input").value.trim();
-    if (!leagueId) return;
+    const endpoint = leagueId ? `/league/${leagueId}/bonuses` : "/league/main/bonuses";
 
     const resultsEl = document.getElementById("league-results");
     const loaderEl = document.getElementById("league-loader");
@@ -164,16 +165,17 @@ async function handleLeagueSearch(e) {
     loaderEl.classList.add("visible");
 
     try {
-        const response = await fetch(`${API_BASE}/league/${leagueId}/bonuses`);
+        const response = await fetch(`${API_BASE}${endpoint}`);
         if (!response.ok) {
-            const data = await response.json().catch(() => ({}));
-            throw new Error(data.detail || `HTTP ${response.status}`);
+            const errData = await response.json().catch(() => null);
+            const detail = errData && typeof errData === "object" ? (errData.detail || JSON.stringify(errData)) : `HTTP ${response.status}`;
+            throw new Error(detail);
         }
         const data = await response.json();
         renderLeagueResult(data);
         resultsEl.style.display = "block";
     } catch (err) {
-        errorEl.textContent = `Error: ${err.message}`;
+        errorEl.textContent = `Error: ${err.message || String(err)}`;
         errorEl.classList.add("visible");
     } finally {
         loaderEl.classList.remove("visible");

@@ -66,14 +66,16 @@ class BonusService:
             bonuses_data=team.bonuses_data,
         )
 
-    async def get_league_bonuses(self, league_id: int, season_id: int = 6) -> LeagueBonusReport:
+    async def get_league_bonuses(
+        self, league_id: int | None = None, season_id: int = 6
+    ) -> LeagueBonusReport:
         """Get bonus usage status for all teams in a league.
 
         Fetches the league data first, then fetches team bonus data for each team
         concurrently to build a complete report.
 
         Args:
-            league_id: The custom league ID.
+            league_id: The custom league ID. Pass None for the main global league table.
             season_id: The season ID (default 6).
 
         Returns:
@@ -82,20 +84,25 @@ class BonusService:
         Raises:
             BonusServiceError: If fetching or parsing league data fails.
         """
+        league_label = f"league {league_id}" if league_id is not None else "main league"
         try:
             league_response = await self._client.get_league_data(league_id)
         except DreamTeamClientError as exc:
-            raise BonusServiceError(f"Failed to fetch league data for league {league_id}: {exc}") from exc
+            raise BonusServiceError(f"Failed to fetch league data for {league_label}: {exc}") from exc
 
         if not league_response.result or league_response.data is None:
             raise BonusServiceError(
-                f"API returned error for league {league_id}: {league_response.error or 'No data returned'}"
+                f"API returned error for {league_label}: {league_response.error or 'No data returned'}"
             )
 
         league_data = league_response.data
 
+        # Limit to first 100 teams for large leagues (e.g. main league has 1000+ per page)
+        MAX_TEAMS = 100
+        teams_to_fetch = league_data.teams[:MAX_TEAMS]
+
         # Fetch bonus data for each team concurrently
-        tasks = [self._get_team_bonuses_safe(team.user_id) for team in league_data.teams]
+        tasks = [self._get_team_bonuses_safe(team.user_id) for team in teams_to_fetch]
         team_statuses = await asyncio.gather(*tasks)
 
         # Filter out None results (teams that failed to fetch)
@@ -103,7 +110,7 @@ class BonusService:
 
         return LeagueBonusReport(
             league_id=league_id,
-            league_name=league_data.league_name,
+            league_name=league_data.league_name or "Main League Table",
             season_id=season_id,
             teams=valid_statuses,
         )
