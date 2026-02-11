@@ -230,7 +230,7 @@ function renderTeamCard(team, expanded) {
             <div class="team-card-header" onclick="toggleCard(this)">
                 <div class="team-info">
                     <h3>${escapeHtml(team.team_name)}</h3>
-                    <span class="team-meta">${escapeHtml(team.creator_name)} &middot; ID: ${team.user_id}</span>
+                    <span class="team-meta">${escapeHtml(team.creator_name)}</span>
                 </div>
                 <div class="team-stats">
                     <span class="points-badge">${team.total_points} pts</span>

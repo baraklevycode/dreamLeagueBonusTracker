@@ -17,7 +17,17 @@ from dream_league_bonus_tracker.config import Settings, get_settings
 from dream_league_bonus_tracker.models import LeagueBonusReport, TeamBonusStatus
 from dream_league_bonus_tracker.service import BonusService, BonusServiceError
 
-STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+def _get_static_dir() -> Path:
+    """Resolve the static directory path (works both in dev and packaged .exe)."""
+    import sys
+
+    if getattr(sys, "frozen", False):
+        # Running as PyInstaller .exe
+        return Path(sys._MEIPASS) / "static"
+    return Path(__file__).resolve().parent.parent / "static"
+
+
+STATIC_DIR = _get_static_dir()
 
 logger = logging.getLogger(__name__)
 

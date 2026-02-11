@@ -34,3 +34,8 @@ Thumbs.db
 
 # Poetry
 poetry.lock
+
+# PyInstaller
+build/
+dist/
+*.spec
