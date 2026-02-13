@@ -8,6 +8,24 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
+
+# -- Game mode mapping --
+
+class GameMode(IntEnum):
+    """Available fantasy game modes with their season IDs."""
+
+    DREAM_LEAGUE = 6
+    CHAMPIONS_LEAGUE = 8
+
+
+GAME_MODE_NAMES: dict[int, str] = {
+    GameMode.DREAM_LEAGUE: "Dream League",
+    GameMode.CHAMPIONS_LEAGUE: "Champions League Fantasy",
+}
+
+DEFAULT_GAME_MODE = GameMode.DREAM_LEAGUE
+
+
 # -- Bonus mapping --
 
 class BonusType(IntEnum):
@@ -154,6 +172,7 @@ class LeagueBonusReport(BaseModel):
     league_id: Optional[int] = None
     league_name: str
     season_id: int
+    game_mode: str = "Dream League"
     teams: list[TeamBonusStatus]
 
 

@@ -94,11 +94,12 @@ class DreamTeamClient:
         except httpx.HTTPError as exc:
             raise AuthenticationError(f"HTTP error during authentication: {exc}") from exc
 
-    async def get_user_team(self, user_id: int) -> GetUserAndTeamResponse:
+    async def get_user_team(self, user_id: int, season_id: int | None = None) -> GetUserAndTeamResponse:
         """Fetch team data for a specific user.
 
         Args:
             user_id: The Sport5 user ID to fetch team data for.
+            season_id: Override the default season ID. If None, uses the configured default.
 
         Returns:
             Parsed GetUserAndTeamResponse containing user and team data.
@@ -107,7 +108,7 @@ class DreamTeamClient:
             DreamTeamClientError: If the API request fails.
         """
         params = {
-            "seasonId": self._season_id,
+            "seasonId": season_id if season_id is not None else self._season_id,
             "userId": user_id,
         }
         data = await self._get("/api/UserTeam/GetUserAndTeam", params=params)
@@ -118,6 +119,7 @@ class DreamTeamClient:
         league_id: int | None = None,
         page_index: int = 0,
         search_text: str = "",
+        season_id: int | None = None,
     ) -> GetLeagueDataResponse:
         """Fetch league data including all teams.
 
@@ -125,6 +127,7 @@ class DreamTeamClient:
             league_id: The custom league ID. Pass None for the main global league table.
             page_index: Page index for pagination (default 0).
             search_text: Optional search text to filter teams.
+            season_id: Override the default season ID. If None, uses the configured default.
 
         Returns:
             Parsed GetLeagueDataResponse containing league and team data.
@@ -133,7 +136,7 @@ class DreamTeamClient:
             DreamTeamClientError: If the API request fails.
         """
         params: dict[str, Any] = {
-            "seasonId": self._season_id,
+            "seasonId": season_id if season_id is not None else self._season_id,
             "leagueId": league_id if league_id is not None else "null",
             "teamId": "null",
             "isPerRound": "false",

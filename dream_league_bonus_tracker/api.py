@@ -14,7 +14,13 @@ from pydantic import BaseModel
 
 from dream_league_bonus_tracker.client import AuthenticationError, DreamTeamClient
 from dream_league_bonus_tracker.config import Settings, get_settings
-from dream_league_bonus_tracker.models import LeagueBonusReport, TeamBonusStatus
+from dream_league_bonus_tracker.models import (
+    DEFAULT_GAME_MODE,
+    GAME_MODE_NAMES,
+    GameMode,
+    LeagueBonusReport,
+    TeamBonusStatus,
+)
 from dream_league_bonus_tracker.service import BonusService, BonusServiceError
 
 def _get_static_dir() -> Path:
@@ -182,26 +188,46 @@ def _get_service() -> BonusService:
     return _service
 
 
+class GameModeInfo(BaseModel):
+    """Information about a game mode."""
+
+    season_id: int
+    name: str
+
+
+@app.get("/game-modes", response_model=list[GameModeInfo])
+async def get_game_modes() -> list[GameModeInfo]:
+    """List all available game modes."""
+    return [
+        GameModeInfo(season_id=mode.value, name=name)
+        for mode, name in GAME_MODE_NAMES.items()
+    ]
+
+
 @app.get("/team/{user_id}/bonuses", response_model=TeamBonusStatus)
-async def get_team_bonuses(user_id: int) -> TeamBonusStatus:
+async def get_team_bonuses(
+    user_id: int,
+    season_id: int = Query(default=DEFAULT_GAME_MODE.value, description="Season ID (6=Dream League, 8=Champions League)"),
+) -> TeamBonusStatus:
     """Get bonus usage status for a specific team.
 
     Args:
         user_id: The Sport5 user ID.
+        season_id: Season ID - 6 for Dream League, 8 for Champions League Fantasy.
 
     Returns:
         TeamBonusStatus with used and remaining bonuses.
     """
     service = _get_service()
     try:
-        return await service.get_team_bonuses(user_id)
+        return await service.get_team_bonuses(user_id, season_id=season_id)
     except BonusServiceError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
 @app.get("/league/main/bonuses", response_model=LeagueBonusReport)
 async def get_main_league_bonuses(
-    season_id: int = Query(default=6, description="Season ID"),
+    season_id: int = Query(default=DEFAULT_GAME_MODE.value, description="Season ID (6=Dream League, 8=Champions League)"),
 ) -> LeagueBonusReport:
     """Get bonus usage status for all teams in the main global league table."""
     service = _get_service()
@@ -214,13 +240,13 @@ async def get_main_league_bonuses(
 @app.get("/league/{league_id}/bonuses", response_model=LeagueBonusReport)
 async def get_league_bonuses(
     league_id: int,
-    season_id: int = Query(default=6, description="Season ID"),
+    season_id: int = Query(default=DEFAULT_GAME_MODE.value, description="Season ID (6=Dream League, 8=Champions League)"),
 ) -> LeagueBonusReport:
     """Get bonus usage status for all teams in a custom league.
 
     Args:
         league_id: The custom league ID.
-        season_id: The season ID (default 6).
+        season_id: Season ID - 6 for Dream League, 8 for Champions League Fantasy.
 
     Returns:
         LeagueBonusReport with bonus status for every team in the league.

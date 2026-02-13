@@ -13,8 +13,19 @@
 <body>
     <!-- Header -->
     <div class="header">
-        <h1>Dream League <span>Bonus Tracker</span></h1>
+        <h1 id="header-title">Dream League <span>Bonus Tracker</span></h1>
         <p>Track bonus usage across teams and leagues</p>
+        <!-- Game Mode Toggle -->
+        <div class="game-mode-bar">
+            <div class="game-mode-toggle">
+                <button class="mode-btn active" data-season="6" onclick="switchGameMode(6)">
+                    <span class="mode-icon">&#9917;</span> Dream League
+                </button>
+                <button class="mode-btn" data-season="8" onclick="switchGameMode(8)">
+                    <span class="mode-icon">&#127942;</span> Champions League
+                </button>
+            </div>
+        </div>
         <!-- Auth Status Bar -->
         <div class="auth-bar">
             <div id="auth-status" class="auth-status">

@@ -13,6 +13,8 @@ from dream_league_bonus_tracker.client import DreamTeamClient, DreamTeamClientEr
 from dream_league_bonus_tracker.models import (
     ALL_BONUS_IDS,
     BONUS_NAMES,
+    DEFAULT_GAME_MODE,
+    GAME_MODE_NAMES,
     BonusUsage,
     LeagueBonusReport,
     TeamBonusStatus,
@@ -35,11 +37,12 @@ class BonusService:
     def __init__(self, client: DreamTeamClient) -> None:
         self._client = client
 
-    async def get_team_bonuses(self, user_id: int) -> TeamBonusStatus:
+    async def get_team_bonuses(self, user_id: int, season_id: int | None = None) -> TeamBonusStatus:
         """Get bonus usage status for a specific team.
 
         Args:
             user_id: The Sport5 user ID.
+            season_id: Override the season ID. If None, uses the client default.
 
         Returns:
             TeamBonusStatus with used and remaining bonuses.
@@ -48,7 +51,7 @@ class BonusService:
             BonusServiceError: If fetching or parsing team data fails.
         """
         try:
-            response = await self._client.get_user_team(user_id)
+            response = await self._client.get_user_team(user_id, season_id=season_id)
         except DreamTeamClientError as exc:
             raise BonusServiceError(f"Failed to fetch team data for user {user_id}: {exc}") from exc
 
@@ -67,7 +70,7 @@ class BonusService:
         )
 
     async def get_league_bonuses(
-        self, league_id: int | None = None, season_id: int = 6
+        self, league_id: int | None = None, season_id: int = DEFAULT_GAME_MODE.value
     ) -> LeagueBonusReport:
         """Get bonus usage status for all teams in a league.
 
@@ -76,7 +79,7 @@ class BonusService:
 
         Args:
             league_id: The custom league ID. Pass None for the main global league table.
-            season_id: The season ID (default 6).
+            season_id: The season ID (default: Dream League = 6, Champions League = 8).
 
         Returns:
             LeagueBonusReport with bonus status for all teams in the league.
@@ -85,8 +88,11 @@ class BonusService:
             BonusServiceError: If fetching or parsing league data fails.
         """
         league_label = f"league {league_id}" if league_id is not None else "main league"
+        game_mode_name = GAME_MODE_NAMES.get(season_id, f"Season {season_id}")
         try:
-            league_response = await self._client.get_league_data(league_id)
+            league_response = await self._client.get_league_data(
+                league_id, season_id=season_id
+            )
         except DreamTeamClientError as exc:
             raise BonusServiceError(f"Failed to fetch league data for {league_label}: {exc}") from exc
 
@@ -102,7 +108,10 @@ class BonusService:
         teams_to_fetch = league_data.teams[:MAX_TEAMS]
 
         # Fetch bonus data for each team concurrently
-        tasks = [self._get_team_bonuses_safe(team.user_id) for team in teams_to_fetch]
+        tasks = [
+            self._get_team_bonuses_safe(team.user_id, season_id=season_id)
+            for team in teams_to_fetch
+        ]
         team_statuses = await asyncio.gather(*tasks)
 
         # Filter out None results (teams that failed to fetch)
@@ -112,10 +121,13 @@ class BonusService:
             league_id=league_id,
             league_name=league_data.league_name or "Main League Table",
             season_id=season_id,
+            game_mode=game_mode_name,
             teams=valid_statuses,
         )
 
-    async def _get_team_bonuses_safe(self, user_id: int) -> TeamBonusStatus | None:
+    async def _get_team_bonuses_safe(
+        self, user_id: int, season_id: int | None = None
+    ) -> TeamBonusStatus | None:
         """Fetch team bonuses with error handling - returns None on failure.
 
         This allows concurrent league fetching to continue even if individual
@@ -123,12 +135,13 @@ class BonusService:
 
         Args:
             user_id: The Sport5 user ID.
+            season_id: Override the season ID. If None, uses the client default.
 
         Returns:
             TeamBonusStatus or None if fetching failed.
         """
         try:
-            return await self.get_team_bonuses(user_id)
+            return await self.get_team_bonuses(user_id, season_id=season_id)
         except BonusServiceError as exc:
             logger.warning("Failed to fetch bonuses for user %d: %s", user_id, exc)
             return None

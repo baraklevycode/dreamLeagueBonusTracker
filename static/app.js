@@ -16,6 +16,13 @@ const ALL_BONUSES = [
     { id: 4, name: "Full Squad Points" },
 ];
 
+const GAME_MODES = {
+    6: { name: "Dream League", title: "Dream League", icon: "\u26BD" },
+    8: { name: "Champions League Fantasy", title: "Champions League", icon: "\u{1F3C6}" },
+};
+
+let currentSeasonId = 6;
+
 /* === Initialization === */
 document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".tab-btn").forEach(btn => {
@@ -27,6 +34,29 @@ document.addEventListener("DOMContentLoaded", () => {
     // Check auth status on load
     checkAuthStatus();
 });
+
+/* === Game Mode === */
+function switchGameMode(seasonId) {
+    currentSeasonId = seasonId;
+
+    // Update toggle buttons
+    document.querySelectorAll(".mode-btn").forEach(btn => {
+        btn.classList.toggle("active", parseInt(btn.dataset.season) === seasonId);
+    });
+
+    // Update header title
+    const mode = GAME_MODES[seasonId];
+    const titleEl = document.getElementById("header-title");
+    titleEl.innerHTML = `${escapeHtml(mode.title)} <span>Bonus Tracker</span>`;
+
+    // Clear previous results
+    document.getElementById("team-results").style.display = "none";
+    document.getElementById("team-results").innerHTML = "";
+    document.getElementById("team-error").classList.remove("visible");
+    document.getElementById("league-results").style.display = "none";
+    document.getElementById("league-results").innerHTML = "";
+    document.getElementById("league-error").classList.remove("visible");
+}
 
 /* === Auth === */
 async function checkAuthStatus() {
@@ -128,7 +158,7 @@ async function handleTeamSearch(e) {
     loaderEl.classList.add("visible");
 
     try {
-        const response = await fetch(`${API_BASE}/team/${userId}/bonuses`);
+        const response = await fetch(`${API_BASE}/team/${userId}/bonuses?season_id=${currentSeasonId}`);
         if (!response.ok) {
             const errData = await response.json().catch(() => null);
             const detail = errData && typeof errData === "object" ? (errData.detail || JSON.stringify(errData)) : `HTTP ${response.status}`;
@@ -154,7 +184,8 @@ function renderTeamResult(team) {
 async function handleLeagueSearch(e) {
     e.preventDefault();
     const leagueId = document.getElementById("league-id-input").value.trim();
-    const endpoint = leagueId ? `/league/${leagueId}/bonuses` : "/league/main/bonuses";
+    const base = leagueId ? `/league/${leagueId}/bonuses` : "/league/main/bonuses";
+    const endpoint = `${base}?season_id=${currentSeasonId}`;
 
     const resultsEl = document.getElementById("league-results");
     const loaderEl = document.getElementById("league-loader");
